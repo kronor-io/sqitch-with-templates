@@ -1,0 +1,16 @@
+-- Verify [% project %]:[% change %] on [% engine %]
+
+do $$
+begin
+    assert exists (select from pg_constraint con
+        inner join pg_catalog.pg_class rel
+            on rel.oid = con.conrelid
+        inner join pg_catalog.pg_namespace nsp
+            on nsp.oid = connamespace
+        where
+            nsp.nspname = '[% schema %]'
+            and rel.relname = '[% table_name %]'
+            and conname = '[% column_name %]_cannot_be_null'
+    );
+end
+$$;

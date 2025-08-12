@@ -1,0 +1,40 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+[% FOREACH item IN requires -%]
+-- requires: [% item %]
+[% END -%]
+[% FOREACH item IN conflicts -%]
+-- conflicts: [% item %]
+[% END -%]
+
+BEGIN;
+
+    create or replace function [% schema %].trig_[% trigger_name %]()
+    returns trigger as
+    $$
+        declare
+            -- TODO add your variables here like so
+            somevar text;
+            othervar bigint;
+        begin
+          -- TODO add your trigger code here
+          return null;
+        end
+    $$ language plpgsql;
+
+    set client_min_messages TO warning;
+    drop trigger if exists [% trigger_name %] on [% schema %].[% trigger_table %];
+    reset client_min_messages;
+
+    create trigger [% trigger_name %]
+    after insert or update
+    on [% schema %].[% trigger_table %]
+    referencing new table as changed
+    for each statement
+    execute function [% schema %].trig_[% trigger_name %]();
+
+    comment on trigger [% trigger_name %] on [% schema %].[% trigger_table %] is
+    $comment$
+    Placeholder comment about the trigger
+    $comment$;
+
+COMMIT;

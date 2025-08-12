@@ -1,0 +1,101 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+
+begin;
+
+    set local lock_timeout to '50ms';
+    set local statement_timeout to '50ms';
+
+    alter table [% schema %].[% table_name %]
+        add column if not exists [% new_column_name %] [% type %] null;
+
+    create or replace function [% schema %].trig_copy_[% table_name %]_[% old_column_name %]_to_[% new_column_name %]() returns trigger as
+    $$
+        begin
+            -- Copy value from old column to new column. But also do it the
+            -- other way around. Once the worker is deployed and starts writing
+            -- to the new column we could get problems from the old one not
+            -- being set. E.g. not null constraints
+            if new.[% new_column_name %] is null then
+                new.[% new_column_name %] = new.[% old_column_name %];
+            elsif new.[% old_column_name %] is null then
+                new.[% old_column_name %] = new.[% new_column_name %];
+            end if;
+
+            return new;
+        end;
+    $$ language plpgsql;
+
+    set client_min_messages to warning;
+    drop trigger if exists copy_[% table_name %]_[% old_column_name %]_to_[% new_column_name %] on [% schema %].[% table_name %];
+    reset client_min_messages;
+
+    create trigger copy_[% table_name %]_[% old_column_name %]_to_[% new_column_name %]
+        before insert or update on [% schema %].[% table_name %]
+        for each row execute procedure [% schema %].trig_copy_[% table_name %]_[% old_column_name %]_to_[% new_column_name %]();
+
+commit;
+
+do
+$$
+    declare
+        max_[% batch_column %]_ [% batch_column_type %];
+        batch_size_ int := 1000;
+        is_nullable_ boolean := false;
+        column_default_ text;
+    begin
+        set local synchronous_commit to off;
+
+        -- set batch size to 5% of table size or 1000, whichever is smallest
+        select least(1000, greatest(1, count(*) / 20)) into batch_size_
+        from [% schema %].[% table_name %];
+
+        loop
+            set local synchronous_commit to off;
+            set local statement_timeout to '10000ms';
+
+            with
+                to_update as (
+                    select [% batch_column %]
+                    from [% schema %].[% table_name %]
+                    where
+                        [% batch_column %] > max_[% batch_column %]_
+                        or max_[% batch_column %]_ is null
+                    order by [% batch_column %] asc
+                    limit batch_size_
+                    for update
+                ),
+
+                updated as (
+                    update [% schema %].[% table_name %]
+                    set [% new_column_name %] = [% old_column_name %]
+                    from to_update
+                    where
+                        [% table_name %].[% batch_column %] = to_update.[% batch_column %]
+                        and [% new_column_name %] is null
+                    returning [% table_name %].[% batch_column %]
+                )
+
+            select max([% batch_column %]) into max_[% batch_column %]_
+            from updated;
+
+            exit when max_[% batch_column %]_ is null;
+        end loop;
+
+        -- set nullable and default value
+        select is_nullable, column_default into is_nullable_, column_default_
+        from information_schema.columns
+        where
+            table_schema = '[% schema %]'
+            and table_name = '[% table_name %]'
+            and column_name = '[% old_column_name %]';
+
+        if not is_nullable_ then
+            alter table [% schema %].[% table_name %]
+                alter column [% new_column_name %] set not null;
+        end if;
+
+        if column_default_ is not null then
+            execute 'alter table [% schema %].[% table_name %] alter column [% new_column_name %] set default ' || column_default_;
+        end if;
+    end
+$$;

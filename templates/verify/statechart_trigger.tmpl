@@ -1,0 +1,27 @@
+-- Verify [% project %]:[% change %] on [% engine %]
+
+BEGIN;
+
+    do $$
+    declare
+      err text;
+    begin
+
+     select string_agg(
+        errors, '
+        ') into err -- the string with a new line is on purpose
+
+     from
+
+     plpgsql_check_function(
+        '[% schema %].[% function_name %](fsm_event_payload)'
+      ) errors;
+
+     if err <> ''
+      then
+        raise exception '%', err;
+      end if;
+
+   end;
+    $$;
+ROLLBACK;

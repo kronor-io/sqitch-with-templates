@@ -1,0 +1,14 @@
+-- Revert [% project %]:[% change %] from [% engine %]
+
+set lock_timeout to '50ms';
+set statement_timeout to '50ms';
+
+begin;
+
+    alter table [% schema %].[% table_name %]
+        drop column if exists [% new_column_name %];
+
+    drop trigger if exists copy_[% table_name %]_[% old_column_name %]_to_[% new_column_name %] on [% schema %].[% table_name %];
+    drop function if exists [% schema %].trig_copy_[% table_name %]_[% old_column_name %]_to_[% new_column_name %]();
+
+commit;

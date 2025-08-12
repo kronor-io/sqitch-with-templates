@@ -1,0 +1,14 @@
+-- Verify [% project %]:[% change %] from [% engine %]
+
+do
+$$
+    begin
+        select [% old_column_name %]
+        from [% schema %].[% table_name %]
+        limit 1;
+
+        raise exception 'The column [% schema %].[% table_name %].[% old_column_name %] still exists';
+    exception when undefined_column then
+        raise log '[% schema %].[% table_name %].[% old_column_name %] has successfully been removed';
+    end
+$$;

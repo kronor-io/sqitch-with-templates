@@ -1,0 +1,5 @@
+-- Revert [% project %]:[% change %] from [% engine %]
+
+set lock_timeout to '50ms';
+alter table [% schema %].[% table_name %]
+    drop constraint if exists [% column_name %]_cannot_be_null;

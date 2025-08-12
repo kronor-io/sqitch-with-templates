@@ -1,0 +1,3 @@
+-- Revert [% project %]:[% change %] from [% engine %]
+
+drop index concurrently if exists [% schema %].idx_[% table_name %]_[% index_name %];

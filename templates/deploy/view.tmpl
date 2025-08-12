@@ -1,0 +1,23 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+[% FOREACH item IN requires -%]
+-- requires: [% item %]
+[% END -%]
+[% FOREACH item IN conflicts -%]
+-- conflicts: [% item %]
+[% END -%]
+
+BEGIN;
+
+    create or replace view [% schema %].[% view_name %] as
+
+        select
+            foo.id,
+            foo.purchase_id,
+            foo.merchant_id,
+            foo.currency,
+        from [% schema %].bar foo;
+
+    comment on view [% schema %].[% view_name %] is
+        'This comment explain this view';
+
+COMMIT;

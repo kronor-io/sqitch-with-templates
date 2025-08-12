@@ -1,0 +1,7 @@
+-- Revert [% project %]:[% change %] from [% engine %]
+
+BEGIN;
+
+    drop function if exists [% schema %].[% function_name %](fsm_event_payload);
+
+COMMIT;

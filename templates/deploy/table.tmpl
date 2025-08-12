@@ -1,0 +1,30 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+[% FOREACH item IN requires -%]
+-- requires: [% item %]
+[% END -%]
+[% FOREACH item IN conflicts -%]
+-- conflicts: [% item %]
+[% END -%]
+
+BEGIN;
+
+    create table if not exists [% schema %].[% table_name %](
+        -- column1 type not null,
+        -- column2 type not null,
+
+        -- constraint fk_column2
+        --    foreign key (column2)
+        --    references fk_schema.fk_table(fk_column)
+        --    on delete cascade
+    );
+
+    comment on table [% schema %].[% table_name %] is
+      'Placeholder comment about the table';
+
+    comment on column [% schema %].[% table_name %].column1 is
+      'Placeholder comment about the column:column1';
+
+    comment on column [% schema %].[% table_name %].column2 is
+      'Placeholder comment about the column:column2';
+
+COMMIT;

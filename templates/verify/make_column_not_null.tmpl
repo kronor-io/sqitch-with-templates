@@ -1,0 +1,33 @@
+-- Verify [% project %]:[% change %] on [% engine %]
+
+do $$
+begin
+    assert not exists (select from pg_constraint con
+        inner join pg_catalog.pg_class rel
+            on rel.oid = con.conrelid
+        inner join pg_catalog.pg_namespace nsp
+            on nsp.oid = connamespace
+        where
+            nsp.nspname = '[% schema %]'
+            and rel.relname = '[% table_name %]'
+            and conname = '[% column_name %]_cannot_be_null'
+    );
+end
+$$;
+
+
+do $$
+begin
+    assert exists (
+        select *
+        from information_schema.columns c
+        join information_schema.tables t
+             on c.table_schema = t.table_schema
+             and c.table_name = t.table_name
+        where c.table_schema = '[% schema %]'
+              and t.table_name = '[% table_name %]'
+              and c.column_name = '[% column_name %]'
+              and c.is_nullable = 'NO'
+    );
+end
+$$;

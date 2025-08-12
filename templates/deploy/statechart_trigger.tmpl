@@ -1,0 +1,28 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+[% FOREACH item IN requires -%]
+-- requires: [% item %]
+[% END -%]
+[% FOREACH item IN conflicts -%]
+-- conflicts: [% item %]
+[% END -%]
+
+BEGIN;
+
+    create or replace function [% schema %].[% function_name %](event_payload fsm_event_payload)
+        returns void as
+    $$
+        declare
+            merchant_id_ bigint := (event_payload).shard_id;
+            state_machine_id_ bigint := (event_payload).machine_id;
+            event_name_ text := (event_payload).event_name;
+            data_ jsonb := (event_payload).data;
+            from_state_ text := (event_payload).from_state;
+            to_state_ text := (event_payload).to_state;
+            payload_type_ text := (event_payload).payload_type;
+        begin
+            -- TODO your code goes here
+            return;
+        end
+    $$ language plpgsql;
+
+COMMIT;

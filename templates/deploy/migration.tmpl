@@ -1,0 +1,43 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+
+BEGIN;
+
+  -- Do not remove this line
+  select set_config('lock_timeout', '50ms', false);
+
+
+  -- Uncomment the following line in these cases:
+  -- 1. You are adding a not-null column
+  -- 2. You are adding a column with a default value
+  -- 3. You are adding a check constraint
+  -- 4. You are adding a foreign key constraint
+  --
+  -- Those statements, when correctly done should be instant,
+  -- blocking for more than a few milliseconds is an indication that
+  -- something is wrong.
+  --
+  -- select set_config('statement_timeout', '50ms', false);
+
+
+  -- Add your migration code here
+  -- Example for adding a contraint that is initially not valid:
+  --
+  -- alter table [my_table] add constraint [my_contraint] check ([condition]) not valid;
+
+
+  -- Are you altering more than one table? Consider opening another transaction with
+  -- BEGIN; ... COMMIT; and running the alter table statements there.
+
+
+  -- Do you need to alter more than two tables in the same transaction?
+  -- Lock all the tables you need before you alter them:
+  --
+  -- lock table [table1] in exclusive mode;
+  -- lock table [table2] in exclusive mode;
+
+
+  -- AVOID: `exception [e] when` inside do blocks. These create subtransactions,
+  -- which may bring down the whole system in certain cases during a long migration.
+
+
+COMMIT;

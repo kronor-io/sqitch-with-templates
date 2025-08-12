@@ -1,0 +1,8 @@
+-- Revert [% project %]:[% change %] from [% engine %]
+
+begin;
+
+    alter table [% schema %].[% table_name %]
+        drop column [% column_name %];
+
+commit;

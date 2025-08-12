@@ -1,0 +1,18 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+
+set lock_timeout to '50ms';
+
+-- setting a column to not null, if done properly, should be instant.
+-- this limit is set to prevent mistakes in the process by aborting
+-- the migration before things start to block.
+set statement_timeout to '50ms';
+
+alter table [% schema %].[% table_name %]
+    alter column [% column_name %] set not null;
+
+
+alter table [% schema %].[% table_name %]
+    drop constraint if exists [% column_name %]_cannot_be_null;
+
+-- Notice the lack of transactions on this file. Please don't add more code
+-- after this line. We want the retries to be safe without the need for transactions

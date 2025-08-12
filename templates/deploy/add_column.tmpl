@@ -1,0 +1,11 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+
+set lock_timeout to '50ms';
+set statement_timeout to '50ms';
+
+begin;
+
+alter table [% schema %].[% table_name %]
+    add column [% column_name %] __your_type_here__ null;
+
+commit;

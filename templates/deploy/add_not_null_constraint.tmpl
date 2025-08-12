@@ -1,0 +1,14 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+
+set lock_timeout to '50ms';
+
+alter table [% schema %].[% table_name %]
+    drop constraint if exists [% column_name %]_cannot_be_null;
+
+alter table [% schema %].[% table_name %]
+    add constraint [% column_name %]_cannot_be_null
+    check ([% column_name %] is not null)
+    not valid;
+
+-- Notice the lack of transactions on this file. Please don't add more code
+-- after this line. We want the retries to be safe without the need for transactions

@@ -1,0 +1,9 @@
+-- Revert [% project %]:[% change %] from [% engine %]
+
+BEGIN;
+
+    drop domain if exists YOUR_DOMAIN_1;
+
+    drop domain if exists YOUR_DOMAIN_2;
+
+COMMIT;

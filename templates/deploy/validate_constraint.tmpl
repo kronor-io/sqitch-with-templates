@@ -1,0 +1,9 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+
+
+set lock_timeout to '50ms';
+alter table [% schema %].[% table_name %]
+    validate constraint [% constraint_name %];
+
+-- Notice the lack of transactions on this file. Please don't add more code
+-- after this line. We want the retries to be safe without the need for transactions

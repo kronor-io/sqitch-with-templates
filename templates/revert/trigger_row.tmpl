@@ -1,0 +1,8 @@
+-- Revert [% project %]:[% change %] from [% engine %]
+
+BEGIN;
+
+    drop trigger if exists [% trigger_name %] on [% schema %].[% trigger_table %];
+    drop function if exists [% schema %].trig_[% trigger_name %]();
+
+COMMIT;

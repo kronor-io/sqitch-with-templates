@@ -1,0 +1,58 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+
+do $$
+
+declare
+    created_at_ timestamptz = '2020-01-01';
+    last_created_at_ timestamptz = null;
+begin
+
+    set local synchronous_commit to remote_apply;
+    set local lock_timeout to '50ms';
+
+    loop
+        with to_be_updated as (
+           select *
+           from [% schema %].[% table_name %]
+           -- ensure that the conditions don't result in infinite loop
+           -- the `>=` check for `created_at` works only if the condition
+           -- after the `and` clause terminate
+           where [% table_name %].created_at >= created_at_
+             and -- verify that column hasn't been updated already
+           order by [% table_name %].created_at asc
+           limit 100
+           for update
+        ), updates as (
+           update [% schema %].[% table_name %]
+              set -- assign some value to some column
+           from to_be_updated
+           where [% table_name %].id = to_be_updated.id
+             and [% table_name %].merchant_id = to_be_updated.merchant_id
+        )
+        select max(to_be_updated.created_at) into last_created_at_ from to_be_updated;
+
+        exit when last_created_at_ is null;
+
+        created_at_ := last_created_at_;
+        last_created_at_ := null;
+
+        commit; -- we don't want to sleep inside the transaction with locks taken
+
+        raise log 'sleeping';
+
+        -- we delay the next transaction in the loop by 1 second in the case where
+        -- there is no exception, to give a chance for any other waiting transactions.
+        perform pg_sleep(1);
+    end loop;
+
+    -- If you inserted lots of new rows, remember to run ANALYZE on the target table
+    -- analyze [% schema %].[% table_name %];
+
+    if last_created_at_ is null then
+        raise info '"[% schema %].[% table_name %]" successfully updated';
+    else
+        raise exception 'failed to update data in "[% schema %].[% table_name %]"';
+    end if;
+
+end
+$$;

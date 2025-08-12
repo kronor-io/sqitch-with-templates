@@ -1,0 +1,18 @@
+-- Verify [% project %]:[% change %] from [% engine %]
+
+BEGIN;
+
+    do $$
+        BEGIN
+            assert (
+            SELECT count(*)
+            FROM   pg_catalog.pg_stat_user_indexes s,
+               pg_index i
+            WHERE  i.indexrelid = s.indexrelid
+                and schemaname in ('[% schema %]', '[% table_name %]')
+                and indexrelname in ('idx_[% table_name %]_[% index_name %]')
+            ) = 1;
+        END
+    $$;
+
+ROLLBACK;

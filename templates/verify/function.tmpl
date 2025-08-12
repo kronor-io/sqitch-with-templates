@@ -1,0 +1,36 @@
+-- Verify [% project %]:[% change %] on [% engine %]
+
+BEGIN;
+
+    do $$
+    declare
+      err text;
+      plpgsql_check_exists_ boolean := false;
+    begin
+
+     select count(*) > 0 into plpgsql_check_exists_
+     from pg_catalog.pg_extension
+     where extname = 'plpgsql_check';
+
+     if plpgsql_check_exists_ then
+
+         select string_agg(
+            errors, '
+            ') into err -- the string with a new line is on purpose
+
+         from
+
+         plpgsql_check_function(
+            '[% schema %].[% function_name %]()' -- TODO add your arguments here
+          ) errors;
+
+    end if;
+
+     if err <> ''
+      then
+        raise exception '%', err;
+      end if;
+
+   end;
+    $$;
+ROLLBACK;

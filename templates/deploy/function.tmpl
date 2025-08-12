@@ -1,0 +1,23 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+[% FOREACH item IN requires -%]
+-- requires: [% item %]
+[% END -%]
+[% FOREACH item IN conflicts -%]
+-- conflicts: [% item %]
+[% END -%]
+
+BEGIN;
+
+    create or replace function [% schema %].[% function_name %](first_arg bigint, second_arg text)
+        returns bigint as
+    $$
+        declare
+          -- TODO local variables goes here
+          merchant_id_ bigint;
+        begin
+          -- TODO your code goes here
+          return merchant_id_;
+        end
+    $$ language plpgsql;
+
+COMMIT;

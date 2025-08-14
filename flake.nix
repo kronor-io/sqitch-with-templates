@@ -1,8 +1,8 @@
 {
   description = "sqitch with kronor specific templates";
   nixConfig = {
-    extra-substituters = "https://kronor.cachix.org";
-    extra-trusted-public-keys = "kronor.cachix.org-1:AcZQBZxsK0SSlBoWmD0dNxfmtSoXueMcDBAhxzGb0MU=";
+    extra-substituters = "https://pranaysashank.cachix.org";
+    extra-trusted-public-keys = "pranaysashank.cachix.org-1:VeqW46y6BVO74w4ViwzeWqSpDqxuWxtC2DO2zoe9rzc=";
   };
   inputs = {
     git-hooks.url = "github:cachix/git-hooks.nix";
@@ -131,7 +131,10 @@
       }
       ) // {
       githubActions = nix-github-actions.lib.mkGithubMatrix {
-        checks = nixpkgs.lib.getAttrs [ "x86_64-linux" "aarch64-linux" ] (nixpkgs.lib.attrsets.recursiveUpdate self.checks self.packages);
+        checks = (nixpkgs.lib.attrsets.recursiveUpdate self.checks self.packages);
+        platforms = nix-github-actions.lib.githubPlatforms // {
+          "aarch64-darwin" = "macos-15";
+        };
       };
     };
 }

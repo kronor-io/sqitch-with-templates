@@ -1,8 +1,14 @@
 {
   description = "sqitch with kronor specific templates";
   nixConfig = {
-    extra-substituters = "https://pranaysashank.cachix.org";
-    extra-trusted-public-keys = "pranaysashank.cachix.org-1:VeqW46y6BVO74w4ViwzeWqSpDqxuWxtC2DO2zoe9rzc=";
+    extra-substituters = [
+      "https://kronor-open.cachix.org"
+      "https://pranaysashank.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "pranaysashank.cachix.org-1:VeqW46y6BVO74w4ViwzeWqSpDqxuWxtC2DO2zoe9rzc="
+      "kronor-open.cachix.org-1:D1shHZh5BRkmM8RB9BaEqBURIgD/n5+u8KFXD1+DbF8="
+    ];
   };
   inputs = {
     git-hooks.url = "github:cachix/git-hooks.nix";
@@ -14,9 +20,6 @@
     hackage-nix.flake = false;
     kronor-haskell-packages.url = "github:kronor-io/kronor-haskell-packages/repo";
     kronor-haskell-packages.flake = false;
-    cabal-audit-src.url = "github:kronor-io/cabal-audit";
-    nix-github-actions.url = "github:nix-community/nix-github-actions";
-    nix-github-actions.inputs.nixpkgs.follows = "nixpkgs";
   };
   outputs =
     { self
@@ -25,8 +28,6 @@
     , haskell-nix
     , hackage-nix
     , kronor-haskell-packages
-    , cabal-audit-src
-    , nix-github-actions
     }:
     let
       supportedSystems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
@@ -59,6 +60,52 @@
           list_of_attrs;
       eachSystem = f: foldAttrs mergeAttrs { }
         (map (s: builtins.mapAttrs (_: v: { ${s} = v; }) (f s)) supportedSystems);
+
+      githubActionsLib =
+        let
+          inherit (builtins) attrValues mapAttrs attrNames;
+          flatten = list: builtins.foldl' (acc: v: acc ++ v) [ ] list;
+        in
+        rec {
+          githubPlatforms = {
+            "x86_64-linux" = "ubuntu-latest";
+            "x86_64-darwin" = "macos-13";
+            "aarch64-darwin" = "macos-latest";
+            "aarch64-linux" = "ubuntu-24.04-arm";
+          };
+
+          mkGithubMatrix =
+            { checks
+            , attrPrefix ? "githubActions.checks"
+            , platforms ? githubPlatforms
+            }: {
+              inherit checks;
+              matrix = {
+                include = flatten (attrValues (
+                  mapAttrs
+                    (
+                      system: pkgs: builtins.map
+                        (attr:
+                          {
+                            name = attr;
+                            inherit system;
+                            os =
+                              let
+                                os = platforms.${system};
+                              in
+                              if builtins.typeOf os == "list" then os else [ os ];
+                            attr = (
+                              if attrPrefix != ""
+                              then "${attrPrefix}.${system}.\"${attr}\""
+                              else "${system}.\"${attr}\""
+                            );
+                          })
+                        (attrNames pkgs)
+                    )
+                    checks));
+              };
+            };
+        };
     in
     eachSystem
       (system:
@@ -100,12 +147,12 @@
         };
 
         shell = createMigrationProject.shellFor {
-
-          buildInputs = [
-            self.packages.${system}.sqitchPg
-          ];
-
           withHoogle = false;
+
+          nativeBuildInputs = [
+            self.packages.${system}.sqitchPg
+            self.checks.${system}.pre-commit-check.enabledPackages
+          ];
 
           shellHook = ''
             ${self.checks.${system}.pre-commit-check.shellHook}
@@ -120,21 +167,24 @@
             hooks = {
               nixpkgs-fmt.enable = true;
               fourmolu.enable = true;
+              zizmor.enable = true;
             };
           };
         };
         packages = {
           default = createMigrationProject.create-migration.components.exes.create-migration;
+          freezeFile = createMigrationProject.plan-nix.freeze;
           sqitchPg = pkgs.sqitchPg;
         };
         devShells.default = shell;
       }
       ) // {
-      githubActions = nix-github-actions.lib.mkGithubMatrix {
-        checks = (nixpkgs.lib.attrsets.recursiveUpdate self.checks self.packages);
-        platforms = nix-github-actions.lib.githubPlatforms // {
-          "aarch64-darwin" = "macos-15";
-        };
+      githubActions = githubActionsLib.mkGithubMatrix {
+        checks = (nixpkgs.lib.attrsets.recursiveUpdate self.checks (
+          nixpkgs.lib.attrsets.mapAttrs
+            (_: pkgs: nixpkgs.lib.attrsets.removeAttrs pkgs [ "freezeFile" ])
+            self.packages
+        ));
       };
     };
 }

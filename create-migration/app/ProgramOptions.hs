@@ -89,6 +89,5 @@ commandParser =
 dbParser :: Parser Db
 dbParser =
     argument
-        ( Db <$> str
-        )
+        (Db <$> str)
         (metavar "DB" <> help "specify a database to run migration in")

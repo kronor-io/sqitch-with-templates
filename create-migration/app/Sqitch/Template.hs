@@ -1,10 +1,3 @@
-{-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedRecordDot #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -Wno-partial-fields #-}
 
 module Sqitch.Template (
@@ -15,14 +8,11 @@ module Sqitch.Template (
     Trigger (..),
     FunctionType (..),
     Source (..),
-    parseTriggerType,
-    parseFunctionType,
 ) where
 
-import Config
-import Data.Map (Map)
+import Data.Map.Strict (Map)
 import Data.Map.Strict qualified as Map
-import Data.Maybe
+import Data.Maybe (fromJust)
 import Data.String.Interpolate (iii)
 import Data.Text (Text)
 import Data.Text qualified as T
@@ -30,10 +20,13 @@ import Data.Time
 import Data.Time qualified as Time
 import Prompt
 
--- | `Global`'s come from the config file, `Local`'s are gathered from the user.
+-- | Where a template variable's value comes from.
 data Source a
-    = Local {var :: a, desc :: Text}
-    | Infer {var :: a, desc :: Text, infer :: Map a Text -> Maybe Text}
+    = -- | Asked for interactively unless given on the command line.
+      Local {var :: a, desc :: Text}
+    | -- | Derived from the variables gathered so far; asked for only when it
+      -- cannot be derived.
+      Infer {var :: a, desc :: Text, infer :: Map a Text -> Maybe Text}
 
 instance Prompt Source where
     message = \case
@@ -49,18 +42,6 @@ instance Prompt Source where
             if not . T.null $ res
                 then Right (Local (var, res) desc)
                 else Left "Empty value is not acceptable."
-
-parseTriggerType :: Config (Text, Text) -> TemplateEnum
-parseTriggerType x = case x.kind of
-    ("type", "row") -> Trigger Row
-    ("type", "statement") -> Trigger Statement
-    _ -> error "invalid trigger type"
-
-parseFunctionType :: Config (Text, Text) -> TemplateEnum
-parseFunctionType x = case x.kind of
-    ("type", "general") -> Function GeneralFunction
-    ("type", "statechart_trigger") -> Function StatechartTriggerFunction
-    _ -> error "invalid trigger type"
 
 ---------------
 -- TEMPLATES --
@@ -78,6 +59,8 @@ data TemplateEnum
     | Migration
     | BulkUpdate
     | AddIndex
+    | AddIndexToPartitionedTable
+    | AddForeignKeyFromPartitionedTable
     | AddNotNullConstraint
     | ValidateConstraint
     | MakeColumnNotNull
@@ -227,6 +210,107 @@ metaOf =
                     return [iii| add index #{schema}.#{tableName}.#{indexName} |]
                 }
             ]
+        AddIndexToPartitionedTable ->
+            [ TemplateSpec
+                { name = "add_index_to_partitioned_table"
+                , vars =
+                    [ Local "schema" "name of the schema"
+                    , Local "table_name" "name of the table"
+                    , Local "column" "name of the column to be indexed on"
+                    ]
+                , layout = \t0 m -> schemaBasedLayout m do
+                    let year :: String = Time.formatTime defaultTimeLocale "%Y" t0
+                    let month :: String = Time.formatTime defaultTimeLocale "%m" t0
+                    let dateFormated :: String = Time.formatTime defaultTimeLocale "%F" t0
+                    tableName <- Map.lookup "table_name" m
+                    return [iii| migrations/#{year}/#{month}/#{dateFormated}-index-partitioned-table-#{tableName} |]
+                , description = \vars -> do
+                    tableName <- Map.lookup "table_name" vars
+                    column <- Map.lookup "column" vars
+                    schema <- Map.lookup "schema" vars
+                    return [iii| index #{schema}.#{tableName} on #{column} |]
+                }
+            ]
+        AddForeignKeyFromPartitionedTable ->
+            [ TemplateSpec
+                { name = "add_fk_from_partitioned_table_part1"
+                , vars =
+                    [ Local "schema" "name of the schema"
+                    , Local "table_name" "name of the table"
+                    , Local "column" "name of the column that will reference another table"
+                    , Local "target_schema" "name of the schema of the referenced table"
+                    , Local "target_table_name" "name of the referenced table"
+                    , Local "target_table_column" "name of the referenced table column"
+                    ]
+                , layout = \t0 m -> schemaBasedLayout m do
+                    let year :: String = Time.formatTime defaultTimeLocale "%Y" t0
+                    let month :: String = Time.formatTime defaultTimeLocale "%m" t0
+                    let dateFormated :: String = Time.formatTime defaultTimeLocale "%F" t0
+                    tableName <- Map.lookup "table_name" m
+                    targetTableName <- Map.lookup "target_table_name" m
+                    return [iii| migrations/#{year}/#{month}/#{dateFormated}-add-fk-from-partitioned-table-#{tableName}-to-#{targetTableName}-part1|]
+                , description = \vars -> do
+                    tableName <- Map.lookup "table_name" vars
+                    column <- Map.lookup "column" vars
+                    schema <- Map.lookup "schema" vars
+                    targetTableName <- Map.lookup "target_table_name" vars
+                    targetColumn <- Map.lookup "target_table_column" vars
+                    targetSchema <- Map.lookup "target_schema" vars
+                    return [iii| add fk from #{schema}.#{tableName}.#{column} to #{targetSchema}.#{targetTableName}.#{targetColumn}|]
+                }
+            , TemplateSpec
+                { name = "add_fk_from_partitioned_table_part2"
+                , vars =
+                    [ Local "schema" "name of the schema"
+                    , Local "table_name" "name of the table"
+                    , Local "column" "name of the column that will reference another table"
+                    , Local "target_schema" "name of the schema of the referenced table"
+                    , Local "target_table_name" "name of the referenced table"
+                    , Local "target_table_column" "name of the referenced table column"
+                    ]
+                , layout = \t0 m -> schemaBasedLayout m do
+                    let year :: String = Time.formatTime defaultTimeLocale "%Y" t0
+                    let month :: String = Time.formatTime defaultTimeLocale "%m" t0
+                    let dateFormated :: String = Time.formatTime defaultTimeLocale "%F" t0
+                    tableName <- Map.lookup "table_name" m
+                    targetTableName <- Map.lookup "target_table_name" m
+                    return [iii| migrations/#{year}/#{month}/#{dateFormated}-add-fk-from-partitioned-table-#{tableName}-to-#{targetTableName}-part2|]
+                , description = \vars -> do
+                    tableName <- Map.lookup "table_name" vars
+                    column <- Map.lookup "column" vars
+                    schema <- Map.lookup "schema" vars
+                    targetTableName <- Map.lookup "target_table_name" vars
+                    targetColumn <- Map.lookup "target_table_column" vars
+                    targetSchema <- Map.lookup "target_schema" vars
+                    return [iii| add fk from #{schema}.#{tableName}.#{column} to #{targetSchema}.#{targetTableName}.#{targetColumn}|]
+                }
+            , TemplateSpec
+                { name = "add_fk_from_partitioned_table_part3"
+                , vars =
+                    [ Local "schema" "name of the schema"
+                    , Local "table_name" "name of the table"
+                    , Local "column" "name of the column that will reference another table"
+                    , Local "target_schema" "name of the schema of the referenced table"
+                    , Local "target_table_name" "name of the referenced table"
+                    , Local "target_table_column" "name of the referenced table column"
+                    ]
+                , layout = \t0 m -> schemaBasedLayout m do
+                    let year :: String = Time.formatTime defaultTimeLocale "%Y" t0
+                    let month :: String = Time.formatTime defaultTimeLocale "%m" t0
+                    let dateFormated :: String = Time.formatTime defaultTimeLocale "%F" t0
+                    tableName <- Map.lookup "table_name" m
+                    targetTableName <- Map.lookup "target_table_name" m
+                    return [iii| migrations/#{year}/#{month}/#{dateFormated}-add-fk-from-partitioned-table-#{tableName}-to-#{targetTableName}-part3|]
+                , description = \vars -> do
+                    tableName <- Map.lookup "table_name" vars
+                    column <- Map.lookup "column" vars
+                    schema <- Map.lookup "schema" vars
+                    targetTableName <- Map.lookup "target_table_name" vars
+                    targetColumn <- Map.lookup "target_table_column" vars
+                    targetSchema <- Map.lookup "target_schema" vars
+                    return [iii| add fk from #{schema}.#{tableName}.#{column} to #{targetSchema}.#{targetTableName}.#{targetColumn}|]
+                }
+            ]
         AddNotNullConstraint ->
             [ TemplateSpec
                 { name = "add_not_null_constraint"
@@ -351,6 +435,6 @@ metaOf =
     timeBasedLayout t0 m = do
         let year :: String = Time.formatTime defaultTimeLocale "%Y" t0
         let month :: String = Time.formatTime defaultTimeLocale "%m" t0
-        let dateFormated :: String = Time.formatTime defaultTimeLocale "%F" t0
+        let dateFormated :: String = Time.formatTime defaultTimeLocale "%F-%H%M%S" t0
         let descFormated :: Text = T.replace " " "-" (fromJust (Map.lookup "description" m))
         return [iii| migrations/#{year}/#{month}/#{dateFormated}-#{descFormated} |]

@@ -1,0 +1,19 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+
+-- Do not remove this line
+select set_config('lock_timeout', '50ms', false);
+
+\o ./validate-fk-from-[% table_name %].sql
+select
+    format(
+        'alter table %s validate constraint fk_%s_[% target_table_name %];',
+        inhrelid::regclass::text,
+        replace(inhrelid::regclass::text, '.', '_')
+    )
+from pg_inherits
+where inhparent = '[% schema %].[% table_name %]'::regclass;
+\o
+
+\i ./validate-fk-from-[% table_name %].sql
+
+\! rm -f ./validate-fk-from-[% table_name %].sql

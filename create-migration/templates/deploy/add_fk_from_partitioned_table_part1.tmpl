@@ -1,0 +1,30 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+
+-- Do not remove this line
+select set_config('lock_timeout', '50ms', false);
+select set_config('statement_timeout', '50ms', false);
+
+-- drop the constraint before adding it to make it idempotent
+\o ./add-fk-from-[% table_name %]-not-valid.sql
+select
+    format(
+        '
+alter table %s
+  drop constraint if exists fk_%s_[% target_table_name %],
+  add constraint fk_%s_[% target_table_name %]
+    foreign key ([% column %])
+    references [% target_schema %].[% target_table_name %]([% target_table_column %])
+    deferrable
+    not valid;
+',
+        inhrelid::regclass::text,
+        replace(inhrelid::regclass::text, '.', '_'),
+        replace(inhrelid::regclass::text, '.', '_')
+    )
+from pg_inherits
+where inhparent = '[% schema %].[% table_name %]'::regclass;
+\o
+
+\i ./add-fk-from-[% table_name %]-not-valid.sql
+
+\! rm -f ./add-fk-from-[% table_name %]-not-valid.sql

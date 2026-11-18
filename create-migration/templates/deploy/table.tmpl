@@ -11,11 +11,13 @@ BEGIN;
     create table if not exists [% schema %].[% table_name %](
         -- column1 type not null,
         -- column2 type not null,
+        created_at timestamptz not null default clock_timestamp(),
 
-        -- constraint fk_column2
+        -- constraint fk_[% table_name %]_fk_table
         --    foreign key (column2)
         --    references fk_schema.fk_table(fk_column)
         --    on delete cascade
+        --    deferrable
     );
 
     comment on table [% schema %].[% table_name %] is

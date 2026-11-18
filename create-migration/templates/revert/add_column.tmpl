@@ -3,6 +3,6 @@
 begin;
 
     alter table [% schema %].[% table_name %]
-        drop column [% column_name %];
+        drop column if exists [% column_name %];
 
 commit;

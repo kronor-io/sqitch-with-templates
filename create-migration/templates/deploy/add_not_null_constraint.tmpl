@@ -5,6 +5,8 @@ set lock_timeout to '50ms';
 alter table [% schema %].[% table_name %]
     drop constraint if exists [% column_name %]_cannot_be_null;
 
+-- Note that the constraint is valid for any new rows, make sure that all future inserts are
+-- valid before you run this migration, for example by using a before trigger on the table.
 alter table [% schema %].[% table_name %]
     add constraint [% column_name %]_cannot_be_null
     check ([% column_name %] is not null)

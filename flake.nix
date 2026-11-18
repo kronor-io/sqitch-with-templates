@@ -138,7 +138,20 @@
           modules = (if system == "x86_64-darwin" || system == "aarch64-darwin" then [ ] else [{
             dontPatchELF = false;
             dontStrip = false;
-          }]) ++ [{ doHaddock = false; }];
+          }]) ++ [{ doHaddock = false; }] ++ [{
+            packages.create-migration.components.exes.create-migration = {
+              build-tools = [ pkgs.buildPackages.installShellFiles ];
+              postInstall = ''
+                $out/bin/create-migration --bash-completion-script $out/bin/create-migration > create-migration.bash
+                $out/bin/create-migration --zsh-completion-script $out/bin/create-migration > create-migration.zsh
+                $out/bin/create-migration --fish-completion-script $out/bin/create-migration > create-migration.fish
+                installShellCompletion --cmd create-migration \
+                  --bash create-migration.bash \
+                  --zsh create-migration.zsh \
+                  --fish create-migration.fish
+              '';
+            };
+          }];
 
           inherit compiler-nix-name;
           cabalProjectFreeze = builtins.readFile ./cabal.project.freeze;

@@ -1,0 +1,39 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+
+-- Do not remove this line
+select set_config('lock_timeout', '50ms', false);
+
+-- use format to generate an expression for each partition that concurrently
+-- creates an index on created_at, e.g.
+--
+-- create index concurrently if not exists
+-- idx_[% table_name %]_2025_02 on
+-- [% schema %].[% table_name %]_2025_02 ([% column %]);
+--
+-- output those generates expression to a file and then execute the file. The
+-- reason why we can't just loop and execute is because the loop starts a
+-- transaction and you can't create an index concurrently in a transaction.
+--
+-- I would make the path /tmp/... but then it seems to write the file to the
+-- server's file system instead of the client. That doesn't feel right
+\o ./index-[% table_name %]-concurrently.sql
+select
+    format(
+        'create index concurrently if not exists idx_%s_[% column %] on %s ([% column %]);',
+        replace(inhrelid::regclass::text, '.', '_'), inhrelid::regclass::text
+    )
+from pg_inherits
+where inhparent = '[% schema %].[% table_name %]'::regclass;
+\o
+\i ./index-[% table_name %]-concurrently.sql
+\! rm -f ./index-[% table_name %]-concurrently.sql
+
+-- add the [% column %] index to the parent table
+create index if not exists idx_[% table_name %]_[% column %]
+on [% schema %].[% table_name %] ([% column %]);
+
+-- add the [% column %] index to the partman template. It's quite possible that
+-- this will fail, the naming of the template tables isn't fully standardized.
+-- If it fails you need to figure out the actual name of the table.
+create index if not exists idx_[% table_name %]_template_[% column %]
+on partman.[% schema %]_[% table_name %]_template ([% column %]);

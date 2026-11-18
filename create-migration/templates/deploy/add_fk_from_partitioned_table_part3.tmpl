@@ -1,0 +1,12 @@
+-- Deploy [% project %]:[% change %] to [% engine %]
+
+-- Do not remove this line
+select set_config('lock_timeout', '50ms', false);
+select set_config('statement_timeout', '50ms', false);
+
+-- this should hopefully be fast now that all the partitions already have foreign keys
+alter table [% schema %].[% table_name %]
+  add constraint fk_[% schema %]_[% table_name %]_[% target_table_name %]
+    foreign key ([% column %])
+    references [% target_schema %].[% target_table_name %]([% target_table_column %])
+    deferrable;

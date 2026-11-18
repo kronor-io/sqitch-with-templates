@@ -24,8 +24,9 @@ import Prompt
 data Source a
     = -- | Asked for interactively unless given on the command line.
       Local {var :: a, desc :: Text}
-    | -- | Derived from the variables gathered so far; asked for only when it
-      -- cannot be derived.
+    | {- | Derived from the variables gathered so far; asked for only when it
+      cannot be derived.
+      -}
       Infer {var :: a, desc :: Text, infer :: Map a Text -> Maybe Text}
 
 instance Prompt Source where

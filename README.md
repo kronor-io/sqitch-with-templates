@@ -17,6 +17,8 @@ safe to run them again.
 
 We built this at [Kronor](https://kronor.io) for our own sqitch project and use it daily.
 
+create-migration is one of the tools Kronor uses to keep a PostgreSQL schema in sqitch, with [sqiff](https://github.com/kronor-io/sqiff), [sqint](https://github.com/kronor-io/sqint) and [psql-retry](https://github.com/kronor-io/psql-retry). [sqitchcraft](https://kronor-io.github.io/sqitchcraft/) shows how they fit together: the repository layout they assume, one change from an edited file to a deploy, and instructions for coding agents.
+
 ## Contents
 
 - [Installation](#installation)

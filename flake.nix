@@ -12,8 +12,8 @@
   };
   inputs = {
     git-hooks.url = "github:cachix/git-hooks.nix";
-    nixpkgs.url = "github:NixOS/nixpkgs/release-25.05";
-    haskell-nix.url = "github:kronor-io/haskell.nix/wip-nixpkgs-ghc";
+    nixpkgs.url = "github:NixOS/nixpkgs/release-26.05";
+    haskell-nix.url = "github:kronor-io/haskell.nix/nixpkgs-ghc-601a4d19";
     haskell-nix.inputs.hackage.follows = "hackage-nix";
     haskell-nix.inputs.nixpkgs.follows = "nixpkgs";
     hackage-nix.url = "github:kronor-io/hackage.nix";
@@ -126,7 +126,7 @@
           }
         );
 
-        compiler-nix-name = "ghc982";
+        compiler-nix-name = "ghc9124";
         index-state = "2025-08-11T23:44:30Z";
 
         createMigrationProject = pkgs.haskell-nix.project {

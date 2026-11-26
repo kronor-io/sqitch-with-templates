@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Templates write SQL keywords in lower case, `begin;`/`commit;`/`rollback;`
+  included, like the rest of their SQL, sqiff's output and pgfmt's default.
+  String values such as `'NO'` are unchanged.
+
 ## 0.2.0.0
 
 - Subcommands replace the old `--table`/`--view`/... flags, and every template

@@ -6,7 +6,7 @@
 -- conflicts: [% item %]
 [% END -%]
 
-BEGIN;
+begin;
 
     create or replace function [% schema %].[% function_name %](event_payload fsm_event_payload)
         returns void as
@@ -25,4 +25,4 @@ BEGIN;
         end
     $$ language plpgsql;
 
-COMMIT;
+commit;

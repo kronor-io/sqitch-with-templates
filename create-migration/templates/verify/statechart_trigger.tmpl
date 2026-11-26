@@ -1,6 +1,6 @@
 -- Verify [% project %]:[% change %] on [% engine %]
 
-BEGIN;
+begin;
 
     do $$
     declare
@@ -24,4 +24,4 @@ BEGIN;
 
    end;
     $$;
-ROLLBACK;
+rollback;

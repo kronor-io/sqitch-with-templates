@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.1.0
 
 - Templates write SQL keywords in lower case, `begin;`/`commit;`/`rollback;`
   included, like the rest of their SQL, sqiff's output and pgfmt's default.

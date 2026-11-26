@@ -1,6 +1,6 @@
 -- Deploy [% project %]:[% change %] to [% engine %]
 
-BEGIN;
+begin;
 
   -- Do not remove this line
   select set_config('lock_timeout', '50ms', false);
@@ -40,4 +40,4 @@ BEGIN;
   -- which may bring down the whole system in certain cases during a long migration.
 
 
-COMMIT;
+commit;

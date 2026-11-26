@@ -1,18 +1,18 @@
 -- Verify [% project %]:[% change %] from [% engine %]
 
-BEGIN;
+begin;
 
     do $$
-        BEGIN
+        begin
             assert (
-            SELECT count(*)
-            FROM   pg_catalog.pg_stat_user_indexes s,
+            select count(*)
+            from   pg_catalog.pg_stat_user_indexes s,
                pg_index i
-            WHERE  i.indexrelid = s.indexrelid
+            where  i.indexrelid = s.indexrelid
                 and schemaname = '[% schema %]'
                 and indexrelname in ('idx_[% table_name %]_[% index_name %]')
             ) = 1;
-        END
+        end
     $$;
 
-ROLLBACK;
+rollback;

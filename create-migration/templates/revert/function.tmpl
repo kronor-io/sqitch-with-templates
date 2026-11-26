@@ -1,7 +1,7 @@
 -- Revert [% project %]:[% change %] from [% engine %]
 
-BEGIN;
+begin;
 
     drop function if exists [% schema %].[% function_name %];
 
-COMMIT;
+commit;

@@ -1,7 +1,7 @@
 -- Verify [% project %]:[% change %] on [% engine %]
 
-BEGIN;
+begin;
 
     select * from [% schema %].[% table_name %] limit 1;
 
-ROLLBACK;
+rollback;

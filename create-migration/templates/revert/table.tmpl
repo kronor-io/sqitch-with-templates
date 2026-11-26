@@ -1,7 +1,7 @@
 -- Revert [% project %]:[% change %] from [% engine %]
 
-BEGIN;
+begin;
 
     drop table if exists [% schema %].[% table_name %];
 
-COMMIT;
+commit;

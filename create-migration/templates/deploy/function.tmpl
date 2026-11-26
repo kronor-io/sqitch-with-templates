@@ -6,7 +6,7 @@
 -- conflicts: [% item %]
 [% END -%]
 
-BEGIN;
+begin;
 
     create or replace function [% schema %].[% function_name %](first_arg bigint, second_arg text)
         returns bigint as
@@ -20,4 +20,4 @@ BEGIN;
         end
     $$ language plpgsql;
 
-COMMIT;
+commit;

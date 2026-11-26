@@ -6,7 +6,7 @@
 -- conflicts: [% item %]
 [% END -%]
 
-BEGIN;
+begin;
 
     create table if not exists [% schema %].[% table_name %](
         -- column1 type not null,
@@ -29,4 +29,4 @@ BEGIN;
     comment on column [% schema %].[% table_name %].column2 is
       'Placeholder comment about the column:column2';
 
-COMMIT;
+commit;

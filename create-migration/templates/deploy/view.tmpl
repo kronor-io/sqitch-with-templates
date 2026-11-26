@@ -6,7 +6,7 @@
 -- conflicts: [% item %]
 [% END -%]
 
-BEGIN;
+begin;
 
     create or replace view [% schema %].[% view_name %] as
 
@@ -20,4 +20,4 @@ BEGIN;
     comment on view [% schema %].[% view_name %] is
         'This comment explain this view';
 
-COMMIT;
+commit;

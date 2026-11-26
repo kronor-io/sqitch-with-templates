@@ -1,7 +1,7 @@
 -- Revert [% project %]:[% change %] from [% engine %]
 
-BEGIN;
+begin;
 
     drop view if exists [% schema %].[% view_name %];
 
-COMMIT;
+commit;

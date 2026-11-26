@@ -6,7 +6,7 @@
 -- conflicts: [% item %]
 [% END -%]
 
-BEGIN;
+begin;
 
     create or replace function [% schema %].trig_[% trigger_name %]()
     returns trigger as
@@ -21,7 +21,7 @@ BEGIN;
         end
     $$ language plpgsql;
 
-    set client_min_messages TO warning;
+    set client_min_messages to warning;
     drop trigger if exists [% trigger_name %] on [% schema %].[% trigger_table %];
     reset client_min_messages;
 
@@ -36,4 +36,4 @@ BEGIN;
     Placeholder comment about the trigger
     $comment$;
 
-COMMIT;
+commit;

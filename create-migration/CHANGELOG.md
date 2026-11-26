@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1.1
+
+- Builds with GHC 9.12.4 and nixpkgs 26.05, on the same haskell.nix,
+  nixpkgs and hackage.nix as sqiff and sqint, so they share one toolchain in
+  the kronor-open cache. `sqitchPg` takes sqitch from nixpkgs 26.05's
+  `perl5Packages`. No change to the templates or the tool.
+
 ## 0.2.1.0
 
 - Templates write SQL keywords in lower case, `begin;`/`commit;`/`rollback;`

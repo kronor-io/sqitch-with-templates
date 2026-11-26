@@ -1,6 +1,6 @@
 cabal-version:      3.0
 name:               create-migration
-version:            0.2.1.0
+version:            0.2.1.1
 synopsis:           Create sqitch changes from templates for safe Postgres migrations
 description:
   A wrapper around @sqitch add@ that picks a template, asks for (or takes on the
